@@ -1,0 +1,11 @@
+name = "pay-together-backend"
+main = "src/index.ts"
+compatibility_date = "2026-06-17"
+compatibility_flags = [ "nodejs_compat", "no_handle_cross_request_promise_resolution" ]
+
+[vars]
+# Thêm các biến môi trường nếu cần thiết (không chứa thông tin nhạy cảm)
+VIETQR_API_URL = "https://api.vietqr.io/v2/banks"
+
+# DATABASE_URL sẽ được config an toàn trên Cloudflare Dashboard hoặc qua wrangler secret:
+# wrangler secret put DATABASE_URL
