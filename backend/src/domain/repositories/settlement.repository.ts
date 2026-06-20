@@ -8,4 +8,5 @@ export interface SettlementRepository {
   createSession(session: Omit<SettlementSession, "id" | "createdAt" | "updatedAt" | "status">, expenseIds: string[], settlements: Omit<Settlement, "id" | "createdAt" | "updatedAt" | "status">[]): Promise<SettlementSession>;
   getSessionById(id: string): Promise<SettlementSession | null>;
   listSessionsByGroupId(groupId: string): Promise<SettlementSession[]>;
+  updateSessionStatus(id: string, status: "PENDING" | "COMPLETED"): Promise<SettlementSession>;
 }

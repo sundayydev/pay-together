@@ -44,7 +44,7 @@ enum SettlementSessionStatus {
 
 // 1. Bảng Người Dùng
 model User {
-  id               String            @id @default(uuid())
+  id               BigInt            @id @default(autoincrement())
   phoneNumber      String            @unique
   passwordHash     String
   name             String
@@ -73,12 +73,12 @@ model User {
 
 // 3. Bảng Nhóm
 model Group {
-  id           String              @id @default(uuid())
+  id           BigInt              @id @default(autoincrement())
   name         String
   description  String?
   inviteCode   String              @unique
   inviteActive Boolean             @default(true)
-  createdById  String
+  createdById  BigInt
   creator      User                @relation("GroupCreator", fields: [createdById], references: [id])
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
@@ -92,10 +92,10 @@ model Group {
 
 // 4. Bảng Thành Viên Nhóm (Trung gian)
 model GroupMember {
-  id       String    @id @default(uuid())
-  groupId  String
+  id       BigInt    @id @default(autoincrement())
+  groupId  BigInt
   group    Group     @relation(fields: [groupId], references: [id])
-  userId   String
+  userId   BigInt
   user     User      @relation(fields: [userId], references: [id])
   role     GroupRole @default(MEMBER)
   joinedAt DateTime  @default(now())
@@ -106,18 +106,18 @@ model GroupMember {
 
 // 5. Bảng Khoản Chi Tiêu
 model Expense {
-  id                  String             @id @default(uuid())
-  groupId             String
+  id                  BigInt             @id @default(autoincrement())
+  groupId             BigInt
   group               Group              @relation(fields: [groupId], references: [id])
-  paidById            String
+  paidById            BigInt
   paidBy              User               @relation("ExpensePayer", fields: [paidById], references: [id])
   amount              Decimal            @db.Decimal(12, 2)
   description         String
   expenseDate         DateTime           @default(now())
-  createdById         String
+  createdById         BigInt
   createdBy           User               @relation("ExpenseLogger", fields: [createdById], references: [id])
   status              ExpenseStatus      @default(PENDING) // Trạng thái quyết toán của khoản chi
-  settlementSessionId String?            // Thuộc phiên quyết toán nào
+  settlementSessionId BigInt?            // Thuộc phiên quyết toán nào
   settlementSession   SettlementSession? @relation(fields: [settlementSessionId], references: [id])
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
@@ -131,10 +131,10 @@ model Expense {
 
 // 6. Bảng Phân Bổ Khoản Chi
 model ExpenseSplit {
-  id        String    @id @default(uuid())
-  expenseId String
+  id        BigInt    @id @default(autoincrement())
+  expenseId BigInt
   expense   Expense   @relation(fields: [expenseId], references: [id])
-  userId    String
+  userId    BigInt
   user      User      @relation(fields: [userId], references: [id])
   amount    Decimal   @db.Decimal(12, 2)
   createdAt DateTime  @default(now())
@@ -145,12 +145,12 @@ model ExpenseSplit {
 
 // 7. Bảng Quyết Toán Thanh Toán Công Nợ (Chuyển khoản thực tế)
 model Settlement {
-  id                         String             @id @default(uuid())
-  groupId                    String
+  id                         BigInt             @id @default(autoincrement())
+  groupId                    BigInt
   group                      Group              @relation(fields: [groupId], references: [id])
-  payerId                    String
+  payerId                    BigInt
   payer                      User               @relation("SettlementPayer", fields: [payerId], references: [id])
-  receiverId                 String
+  receiverId                 BigInt
   receiver                   User               @relation("SettlementReceiver", fields: [receiverId], references: [id])
   amount                     Decimal            @db.Decimal(12, 2)
   
@@ -159,7 +159,7 @@ model Settlement {
   paymentGatewayTransactionId String?            @unique
   paymentLink                String?
   description                String?
-  settlementSessionId        String?            // Liên kết với phiên quyết toán
+  settlementSessionId        BigInt?            // Liên kết với phiên quyết toán
   settlementSession          SettlementSession? @relation(fields: [settlementSessionId], references: [id])
   createdAt                  DateTime           @default(now())
   updatedAt                  DateTime           @updatedAt
@@ -172,13 +172,13 @@ model Settlement {
 
 // 8. Bảng Phiên Quyết Toán (Theo khoảng ngày)
 model SettlementSession {
-  id           String                  @id @default(uuid())
-  groupId      String
+  id           BigInt                  @id @default(autoincrement())
+  groupId      BigInt
   group        Group                   @relation(fields: [groupId], references: [id])
   startDate    DateTime                // Ngày bắt đầu khoảng quyết toán
   endDate      DateTime                // Ngày kết thúc khoảng quyết toán
   status       SettlementSessionStatus @default(PENDING)
-  createdById  String
+  createdById  BigInt
   creator      User                    @relation("SessionCreator", fields: [createdById], references: [id])
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
@@ -192,9 +192,9 @@ model SettlementSession {
 
 // 9. Bảng Refresh Token (Chuẩn OIDC/OAuth2)
 model RefreshToken {
-  id        String    @id @default(uuid())
+  id        BigInt    @id @default(autoincrement())
   token     String    @unique
-  userId    String
+  userId    BigInt
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime  @default(now())

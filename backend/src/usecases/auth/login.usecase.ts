@@ -15,7 +15,14 @@ export class LoginUseCase {
   ): Promise<{
     token: string;
     refresh_token: string;
-    user: { id: string; name: string; phoneNumber: string };
+    user: {
+      id: string;
+      name: string;
+      phoneNumber: string;
+      bankCode: string | null;
+      bankAccount: string | null;
+      bankAccountName: string | null;
+    };
   }> {
     const user = await this.userRepository.findByPhoneNumber(input.phoneNumber);
     if (!user) {
@@ -50,6 +57,9 @@ export class LoginUseCase {
         id: user.id,
         name: user.name,
         phoneNumber: user.phoneNumber,
+        bankCode: user.bankCode || null,
+        bankAccount: user.bankAccount || null,
+        bankAccountName: user.bankAccountName || null,
       },
     };
   }

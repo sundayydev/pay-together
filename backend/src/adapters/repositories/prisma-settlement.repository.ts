@@ -4,16 +4,17 @@ import {
   SettlementSession,
 } from "../../domain/entities/settlement.entity";
 import { SettlementRepository } from "../../domain/repositories/settlement.repository";
+import { serializeBigInts } from "../../utils/serialize";
 
 export class PrismaSettlementRepository implements SettlementRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Settlement | null> {
     const settlement = await this.prisma.settlement.findUnique({
-      where: { id, deletedAt: null },
+      where: { id: BigInt(id), deletedAt: null },
       include: { payer: true, receiver: true },
     });
-    return settlement as any as Settlement | null;
+    return serializeBigInts(settlement) as any as Settlement | null;
   }
 
   async create(
@@ -21,19 +22,19 @@ export class PrismaSettlementRepository implements SettlementRepository {
   ): Promise<Settlement> {
     const settlement = await this.prisma.settlement.create({
       data: {
-        groupId: data.groupId,
-        payerId: data.payerId,
-        receiverId: data.receiverId,
+        groupId: BigInt(data.groupId),
+        payerId: BigInt(data.payerId),
+        receiverId: BigInt(data.receiverId),
         amount: data.amount,
         paymentMethod: data.paymentMethod,
         paymentGatewayTransactionId: data.paymentGatewayTransactionId,
         paymentLink: data.paymentLink,
         description: data.description,
-        settlementSessionId: data.settlementSessionId,
+        settlementSessionId: data.settlementSessionId ? BigInt(data.settlementSessionId) : null,
       },
       include: { payer: true, receiver: true },
     });
-    return settlement as any as Settlement;
+    return serializeBigInts(settlement) as any as Settlement;
   }
 
   async updateStatus(
@@ -42,7 +43,7 @@ export class PrismaSettlementRepository implements SettlementRepository {
     transactionId?: string,
   ): Promise<Settlement> {
     const settlement = await this.prisma.settlement.update({
-      where: { id },
+      where: { id: BigInt(id) },
       data: {
         status,
         ...(transactionId
@@ -51,16 +52,16 @@ export class PrismaSettlementRepository implements SettlementRepository {
       },
       include: { payer: true, receiver: true },
     });
-    return settlement as any as Settlement;
+    return serializeBigInts(settlement) as any as Settlement;
   }
 
   async findByGroupId(groupId: string): Promise<Settlement[]> {
     const settlements = await this.prisma.settlement.findMany({
-      where: { groupId, deletedAt: null },
+      where: { groupId: BigInt(groupId), deletedAt: null },
       include: { payer: true, receiver: true },
       orderBy: { createdAt: "desc" },
     });
-    return settlements as any as Settlement[];
+    return serializeBigInts(settlements) as any as Settlement[];
   }
 
   async createSession(
@@ -77,24 +78,24 @@ export class PrismaSettlementRepository implements SettlementRepository {
     const newSession = await this.prisma.$transaction(async (tx) => {
       const createdSession = await tx.settlementSession.create({
         data: {
-          groupId: session.groupId,
+          groupId: BigInt(session.groupId),
           startDate: session.startDate,
           endDate: session.endDate,
-          createdById: session.createdById,
+          createdById: BigInt(session.createdById),
         },
       });
 
       await tx.expense.updateMany({
-        where: { id: { in: expenseIds } },
+        where: { id: { in: expenseIds.map((eid) => BigInt(eid)) } },
         data: { settlementSessionId: createdSession.id, status: "SETTLED" },
       });
 
       for (const set of settlements) {
         await tx.settlement.create({
           data: {
-            groupId: set.groupId,
-            payerId: set.payerId,
-            receiverId: set.receiverId,
+            groupId: BigInt(set.groupId),
+            payerId: BigInt(set.payerId),
+            receiverId: BigInt(set.receiverId),
             amount: set.amount,
             paymentMethod: set.paymentMethod,
             description: set.description,
@@ -116,25 +117,40 @@ export class PrismaSettlementRepository implements SettlementRepository {
       throw new Error("Failed to create settlement session");
     }
 
-    return newSession as any as SettlementSession;
+    return serializeBigInts(newSession) as any as SettlementSession;
   }
 
   async getSessionById(id: string): Promise<SettlementSession | null> {
     const session = await this.prisma.settlementSession.findUnique({
-      where: { id, deletedAt: null },
+      where: { id: BigInt(id), deletedAt: null },
       include: {
         expenses: { include: { paidBy: true } },
         settlements: { include: { payer: true, receiver: true } },
       },
     });
-    return session as any as SettlementSession | null;
+    return serializeBigInts(session) as any as SettlementSession | null;
   }
 
   async listSessionsByGroupId(groupId: string): Promise<SettlementSession[]> {
     const sessions = await this.prisma.settlementSession.findMany({
-      where: { groupId, deletedAt: null },
+      where: { groupId: BigInt(groupId), deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
-    return sessions as any as SettlementSession[];
+    return serializeBigInts(sessions) as any as SettlementSession[];
+  }
+
+  async updateSessionStatus(
+    id: string,
+    status: "PENDING" | "COMPLETED"
+  ): Promise<SettlementSession> {
+    const session = await this.prisma.settlementSession.update({
+      where: { id: BigInt(id) },
+      data: { status },
+      include: {
+        expenses: true,
+        settlements: { include: { payer: true, receiver: true } },
+      },
+    });
+    return serializeBigInts(session) as any as SettlementSession;
   }
 }

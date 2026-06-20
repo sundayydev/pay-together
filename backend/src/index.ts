@@ -6,6 +6,7 @@ import { authRouter } from "./infrastructure/http/routes/auth.routes";
 import { banksRouter } from "./infrastructure/http/routes/banks.routes";
 import { connectRouter } from "./infrastructure/http/routes/connect.routes";
 import { groupsRouter } from "./infrastructure/http/routes/groups.routes";
+import { expensesRouter } from "./infrastructure/http/routes/expenses.routes";
 
 type Bindings = {
   DATABASE_URL: string;
@@ -40,6 +41,7 @@ app.get("/", (c) => {
 app.route("/api/auth", authRouter);
 app.route("/api/banks", banksRouter);
 app.route("/api/groups", groupsRouter);
+app.route("/api/groups/:groupId/expenses", expensesRouter);
 app.route("/connect", connectRouter);
 
 app.doc("/doc", {
@@ -55,7 +57,7 @@ app.doc("/doc", {
 app.get("/scalar", async (c) => {
   const jwtSecret = c.env.JWT_SECRET;
   const devPayload = {
-    sub: "00000000-0000-0000-0000-000000000000",
+    sub: "1",
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365,
   };
   const token = await sign(devPayload, jwtSecret, "HS256");

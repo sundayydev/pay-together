@@ -1,6 +1,7 @@
 import { PrismaClient } from "../../../generated/prisma/client";
 import { RefreshToken } from "../../domain/entities/refresh-token.entity";
 import { RefreshTokenRepository } from "../../domain/repositories/refresh-token.repository";
+import { serializeBigInts } from "../../utils/serialize";
 
 export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
   constructor(private prisma: PrismaClient) {}
@@ -9,30 +10,30 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
     const refreshToken = await this.prisma.refreshToken.create({
       data: {
         token,
-        userId,
+        userId: BigInt(userId),
         expiresAt,
       },
     });
-    return refreshToken as RefreshToken;
+    return serializeBigInts(refreshToken) as any as RefreshToken;
   }
 
   async findByToken(token: string): Promise<RefreshToken | null> {
     const refreshToken = await this.prisma.refreshToken.findUnique({
       where: { token },
     });
-    return refreshToken as RefreshToken | null;
+    return serializeBigInts(refreshToken) as any as RefreshToken | null;
   }
 
   async revoke(id: string): Promise<void> {
     await this.prisma.refreshToken.update({
-      where: { id },
+      where: { id: BigInt(id) },
       data: { revokedAt: new Date() },
     });
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
+      where: { userId: BigInt(userId), revokedAt: null },
       data: { revokedAt: new Date() },
     });
   }
